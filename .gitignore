@@ -10,6 +10,7 @@
 # Build output directories
 bin/
 dist/
+images/
 
 # Log files
 *.log
