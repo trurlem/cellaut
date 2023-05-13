@@ -1,0 +1,41 @@
+# Binary and executable files
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.out
+*.test
+
+# Build output directories
+bin/
+dist/
+
+# Log files
+*.log
+
+# Dependency management directories
+vendor/
+Gopkg.lock
+
+# Go module cache
+.go-work/
+
+# Other generated files
+*.gen.go
+*.pb.go
+
+# IDE and editor specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific files
+.DS_Store
+Thumbs.db
