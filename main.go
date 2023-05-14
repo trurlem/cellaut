@@ -14,7 +14,8 @@ import (
 const imagesDir = "images/"
 
 // Width and height of the image
-const size = 2 << 10
+const height = 2 << 10
+const width = 2 << 9
 
 type Rule func(left, center, right bool) bool
 
@@ -50,18 +51,44 @@ func generateRule(name int) (Rule, error) {
 
 type simResults [][]bool
 
-func simulateRule(rule Rule) simResults {
-	data := make([][]bool, size)
+func simulateRule(rule Rule, wrappedBoundaries bool) simResults {
+	data := make([][]bool, height)
 	for i := range data {
-		data[i] = make([]bool, size)
+		data[i] = make([]bool, width)
 	}
-	data[0][size/2] = true
+	data[0][width/2] = true
 
-	for y := 1; y < size; y++ {
-		for x := 0; x < size; x++ {
-			l := data[y-1][max(0, x-1)]
+	var left, right func(int) int
+	if wrappedBoundaries {
+		left = func(c int) int {
+			res := (c - 1) % width
+
+			// In Go, a % b can be negative even if b is positive
+			if res < 0 {
+				return res + width
+			}
+
+			return res
+		}
+		right = func(c int) int {
+			return (c + 1) % width
+		}
+	} else {
+		left = func(c int) int {
+			return max(0, c-1)
+		}
+		right = func(c int) int {
+			return min(width-1, c+1)
+		}
+	}
+
+	for y := 1; y < height; y++ {
+		for x := 0; x < width; x++ {
+			// l := data[y-1][max(0, x-1)]
+			l := data[y-1][left(x)]
 			c := data[y-1][x]
-			r := data[y-1][min(size-1, x+1)]
+			// r := data[y-1][min(size-1, x+1)]
+			r := data[y-1][right(x)]
 			data[y][x] = rule(l, c, r)
 		}
 	}
@@ -70,7 +97,7 @@ func simulateRule(rule Rule) simResults {
 }
 
 func createImage(data simResults, offset int, filename string) {
-	img := image.NewRGBA(image.Rect(0, 0, size, size-offset))
+	img := image.NewRGBA(image.Rect(0, 0, width, height-offset))
 	black := color.RGBA{0, 0, 0, 255}
 	white := color.RGBA{255, 255, 255, 255}
 
@@ -98,17 +125,26 @@ func createImage(data simResults, offset int, filename string) {
 
 func main() {
 
+	wrappedBoundaries := false
+
 	for ruleName := 0; ruleName < 256; ruleName++ {
 		fmt.Println("Starting simulation for rule" + strconv.Itoa(ruleName))
 		rule, err := generateRule(ruleName)
 		if err != nil {
 			panic(err)
 		}
-		data := simulateRule(rule)
+		data := simulateRule(rule, wrappedBoundaries)
 
 		var offset int = 0
 
-		createImage(data, offset, "rule"+strconv.Itoa(ruleName)+".png")
+		var imageFilePath string
+		if wrappedBoundaries {
+			imageFilePath = "rule" + strconv.Itoa(ruleName) + "-wrapped.png"
+		} else {
+			imageFilePath = "rule" + strconv.Itoa(ruleName) + ".png"
+		}
+
+		createImage(data, offset, imageFilePath)
 	}
 
 }
